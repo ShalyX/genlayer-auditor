@@ -31,4 +31,4 @@ To invoke the Oracle, use the following command in your terminal/LLM interface:
 - **70%+ (Gaming Tier)**: Acceptable for social/probabilistic games.
 
 ---
-*Created by Antigravity in collaboration with the GTN Team.*
+*Created by Shaly in collaboration with the Antigravity Oracle Engine.*
