@@ -5,11 +5,9 @@ import sys
 # Deterministic Preflight for GenLayer Contracts
 # Focus: Missing Guards, Unsafe Inputs, State Integrity
 
-def check_file(filepath):
+def check_source(content):
     results = []
-    with open(filepath, 'r', encoding='utf-8') as f:
-        content = f.read()
-        lines = content.splitlines()
+    lines = content.splitlines()
 
     # 1. Check for missing Access Control in @gl.public.write
     matches = re.finditer(r'@gl\.public\.write\s+def\s+(\w+)\(self,', content)
@@ -42,24 +40,37 @@ def check_file(filepath):
 
     return results
 
+def check_file(filepath):
+    with open(filepath, 'r', encoding='utf-8') as f:
+        return check_source(f.read())
+
 def main():
     target_dir = "./contracts"
     if len(sys.argv) > 1:
         target_dir = sys.argv[1]
 
     print(f"Scanning contracts in: {target_dir}")
+    if not os.path.isdir(target_dir):
+        print(f"Target directory not found: {target_dir}")
+        print("Pass a contracts directory explicitly, for example: python scripts/preflight.py ./path/to/contracts")
+        return 1
+
     found_any = False
-    for filename in os.listdir(target_dir):
-        if filename.endswith(".py") and not filename.startswith("__"):
+    for root, _, filenames in os.walk(target_dir):
+        for filename in sorted(filenames):
+            if not filename.endswith(".py") or filename.startswith("__"):
+                continue
+
             found_any = True
-            path = os.path.join(target_dir, filename)
+            path = os.path.join(root, filename)
             findings = check_file(path)
             if findings:
-                print(f"--- {filename} ---")
+                print(f"--- {os.path.relpath(path, target_dir)} ---")
                 for f in findings:
                     print(f)
     if not found_any:
         print("No Python contracts found in target directory.")
+    return 0
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
