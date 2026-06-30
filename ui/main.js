@@ -113,6 +113,18 @@ document.addEventListener('DOMContentLoaded', () => {
             return `<li><strong>${escapeHtml(label)}:</strong> ${escapeHtml(text)}</li>`;
         }).join('');
 
+        const narrativeItems = (summary.narrativeFindings || []).map(finding => `
+            <article class="finding-explainer finding-explainer--group">
+                <div class="finding-explainer__header">
+                    <strong>${escapeHtml(finding.title)}</strong>
+                    <span>${escapeHtml(finding.count || 1)}x ${escapeHtml(finding.severity)}</span>
+                </div>
+                ${finding.lines?.length ? `<button type="button" class="finding-location" data-line="${escapeHtml(finding.lines[0])}">${escapeHtml(finding.lines.map(line => `Line ${line}`).join(', '))}</button>` : ''}
+                <p>${escapeHtml(finding.impact)}</p>
+                <p><strong>What to change:</strong> ${escapeHtml(finding.recommendation)}</p>
+            </article>
+        `).join('');
+
         const findingItems = (summary.findingExplanations || []).map(finding => `
             <article class="finding-explainer">
                 <div class="finding-explainer__header">
@@ -139,6 +151,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="summary-eyebrow">Next Actions</div>
                 <ul>${nextSteps}</ul>
             </section>
+            ${narrativeItems ? `
+                <section class="summary-block">
+                    <div class="summary-eyebrow">Finding Groups</div>
+                    <div class="finding-list">${narrativeItems}</div>
+                </section>
+            ` : ''}
             <details class="summary-block summary-disclosure">
                 <summary>Metric Meanings</summary>
                 <ul>${metricItems}</ul>
@@ -156,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </details>
             ` : ''}
         `;
-        summaryPanel.style.display = 'block';
+        summaryPanel.style.display = 'flex';
     }
 
     function renderSourcePreview() {
@@ -218,7 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
             setStatus('Backend Offline', false);
         } finally {
             btn.classList.remove('running');
-        btnText.textContent = 'Invoke Oracle Analysis';
+            btnText.textContent = 'Run audit';
         }
     });
 

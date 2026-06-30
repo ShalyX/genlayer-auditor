@@ -3,139 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GenLayer Auditor | The Oracle</title>
-    <meta name="description" content="GenLayer Auditor - The Oracle of Interpretation. Performs high-intelligence security audits of GenLayer Intelligent Contracts.">
+    <title>GenLayer Auditor</title>
+    <meta name="description" content="GenLayer Auditor performs security and interpretation-risk review for GenLayer Intelligent Contracts.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="background-effects">
-        <div class="glow-orb orb-1"></div>
-        <div class="glow-orb orb-2"></div>
-        <div class="glow-orb orb-3"></div>
-    </div>
+    <main class="app-shell">
+        <header class="topbar">
+            <a class="brand" href="/" aria-label="GenLayer Auditor home">
+                <span class="brand-mark" aria-hidden="true">GA</span>
+                <span>
+                    <strong>GenLayer Auditor</strong>
+                    <small>Interpretation risk console</small>
+                </span>
+            </a>
 
-    <main class="app-container">
-        <header class="app-header">
-            <div class="logo-container">
-                <div class="logo-mark"></div>
-                <div>
-                    <h1>GenLayer Auditor</h1>
-                    <p class="subtitle">The Oracle of Interpretation</p>
+            <div class="topbar-actions">
+                <div class="status-badge" id="statusBadge">
+                    <span class="pulse-dot"></span> System Ready
                 </div>
-            </div>
-            <div class="status-badge" id="statusBadge">
-                <span class="pulse-dot"></span> System Ready
+                <button type="button" class="btn-secondary btn-export" id="downloadReportBtn" disabled>Export .md</button>
             </div>
         </header>
 
-        <div class="dashboard-grid">
-            <!-- Left Column: Input Panel -->
-            <section class="panel input-panel">
-                <h2>New Audit Request</h2>
-                <p class="panel-desc">Submit a GenLayer Intelligent Contract for 5-pillar interpretation variance analysis.</p>
+        <section class="workspace">
+            <section class="editor-pane panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">Audit Input</p>
+                        <h1>Contract review</h1>
+                    </div>
+                    <div class="sample-actions" aria-label="Sample contracts">
+                        <button type="button" class="btn-secondary" id="loadRiskySample">Risky sample</button>
+                        <button type="button" class="btn-secondary" id="loadCleanSample">Clean sample</button>
+                    </div>
+                </div>
 
                 <form id="auditForm" class="audit-form">
-                    <div class="form-group">
-                        <label for="contractName">Contract Name</label>
-                        <input type="text" id="contractName" placeholder="e.g. EscrowContract.py" required>
+                    <label class="field-label" for="contractName">Contract file</label>
+                    <input type="text" id="contractName" placeholder="PredictionMarket.py" required>
+
+                    <div class="editor-toolbar">
+                        <label class="field-label" for="contractSource">Source</label>
+                        <div class="specialist-strip" aria-label="Active specialists">
+                            <label><input type="checkbox" checked disabled> Interpretation</label>
+                            <label><input type="checkbox" checked disabled> Adversarial</label>
+                            <label><input type="checkbox" checked> Reality</label>
+                            <label><input type="checkbox" checked> Consensus</label>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="contractSource">Intelligent Contract Source</label>
-                        <textarea id="contractSource" rows="8" placeholder="Paste your GenLayer python contract here...&#10;&#10;@genlayer.contract&#10;class Escrow:&#10;    ..." required></textarea>
+                    <div class="code-shell">
+                        <textarea id="contractSource" rows="18" wrap="off" placeholder="Paste GenLayer Python contract source..." required></textarea>
                         <div class="source-preview" id="sourcePreview" aria-label="Source line preview"></div>
-                        <div class="sample-actions">
-                            <button type="button" class="btn-secondary" id="loadRiskySample">Load Risky Example</button>
-                            <button type="button" class="btn-secondary" id="loadCleanSample">Load Clean Example</button>
-                        </div>
-                    </div>
-
-                    <div class="form-group config-group">
-                        <label>Specialist Deployment</label>
-                        <div class="checkbox-list">
-                            <label class="custom-checkbox">
-                                <input type="checkbox" checked disabled>
-                                <span class="checkmark"></span>
-                                Interpretation Specialist (Ambiguity Mapping)
-                            </label>
-                            <label class="custom-checkbox">
-                                <input type="checkbox" checked disabled>
-                                <span class="checkmark"></span>
-                                Adversarial Specialist (Prompt Steering)
-                            </label>
-                            <label class="custom-checkbox">
-                                <input type="checkbox" checked>
-                                <span class="checkmark"></span>
-                                Reality Specialist (Data Dependency)
-                            </label>
-                            <label class="custom-checkbox">
-                                <input type="checkbox" checked>
-                                <span class="checkmark"></span>
-                                Consensus Specialist (Variance & Griefing)
-                            </label>
-                        </div>
                     </div>
 
                     <button type="submit" class="btn-primary" id="runAuditBtn">
-                        <span class="btn-text">Invoke Oracle Analysis</span>
-                        <span class="btn-icon">→</span>
+                        <span class="btn-text">Run audit</span>
+                        <span class="btn-icon" aria-hidden="true">></span>
                     </button>
                 </form>
             </section>
 
-            <!-- Right Column: Results & Logs -->
-            <div class="results-column">
-                <section class="panel metrics-panel">
-                    <div class="panel-title-row">
-                        <h2>Oracle Verdict</h2>
-                        <button type="button" class="btn-secondary btn-export" id="downloadReportBtn" disabled>Download Markdown</button>
+            <section class="analysis-pane">
+                <section class="panel verdict-panel">
+                    <div class="panel-header compact">
+                        <div>
+                            <p class="eyebrow">Live Verdict</p>
+                            <h2>Risk posture</h2>
+                        </div>
+                        <div id="finalVerdictBanner" class="verdict-banner" style="display: none;"></div>
                     </div>
+
                     <div class="metrics-grid">
-                        <div class="metric-card">
-                            <div class="metric-label">Consensus Agreement</div>
-                            <div class="metric-value" id="metricConsensus">--</div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-label">Appeal Probability</div>
-                            <div class="metric-value" id="metricAppeal">--</div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-label">Outcome Drift</div>
-                            <div class="metric-value" id="metricDrift">--</div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-label">Reality Volatility</div>
-                            <div class="metric-value" id="metricReality">--</div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-label">Compute Multiplier</div>
-                            <div class="metric-value" id="metricCompute">--</div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-label">Deterministic Risk</div>
-                            <div class="metric-value" id="metricDeterministic">--</div>
-                        </div>
+                        <article class="metric-card">
+                            <span>Consensus</span>
+                            <strong id="metricConsensus" class="metric-value">--</strong>
+                        </article>
+                        <article class="metric-card">
+                            <span>Appeal</span>
+                            <strong id="metricAppeal" class="metric-value">--</strong>
+                        </article>
+                        <article class="metric-card">
+                            <span>Drift</span>
+                            <strong id="metricDrift" class="metric-value">--</strong>
+                        </article>
+                        <article class="metric-card">
+                            <span>Reality</span>
+                            <strong id="metricReality" class="metric-value">--</strong>
+                        </article>
+                        <article class="metric-card">
+                            <span>Compute</span>
+                            <strong id="metricCompute" class="metric-value">--</strong>
+                        </article>
+                        <article class="metric-card">
+                            <span>Code Risk</span>
+                            <strong id="metricDeterministic" class="metric-value">--</strong>
+                        </article>
                     </div>
-                    <div id="finalVerdictBanner" class="verdict-banner" style="display: none;"></div>
+
                     <div id="summaryPanel" class="summary-panel" style="display: none;"></div>
                 </section>
 
                 <section class="panel terminal-panel">
                     <div class="terminal-header">
-                        <span>orchestrator_log.sh</span>
-                        <div class="terminal-controls">
-                            <i></i><i></i><i></i>
-                        </div>
+                        <span>audit stream</span>
+                        <span class="terminal-state">live</span>
                     </div>
                     <div class="terminal-body" id="terminalOutput">
                         <div class="log-line system">Waiting for contract submission...</div>
                     </div>
                 </section>
-            </div>
-        </div>
+            </section>
+        </section>
     </main>
 
     <script src="main.js"></script>
