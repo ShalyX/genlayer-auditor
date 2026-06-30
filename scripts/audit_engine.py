@@ -150,6 +150,7 @@ def invalid_contract_response(contract_name, source, issues):
             ],
             "metricExplanations": metric_explanations(),
             "findingExplanations": explain_findings(findings),
+            "narrativeFindings": merge_finding_explanations(findings),
             "severityModel": SEVERITY_MODEL,
         },
         "severityModel": SEVERITY_MODEL,
@@ -302,6 +303,113 @@ def explain_findings(findings):
     return explanations
 
 
+def finding_root_cause(finding, explanation):
+    message = finding["message"]
+    if "[ACCESS]" in message:
+        return "access-control"
+    if "[PYTHON]" in message:
+        return "unsafe-python"
+    if "[ORACLE]" in message:
+        return "dynamic-oracle-url"
+    if "[STORAGE]" in message:
+        return "storage-persistence"
+    if "[INTERPRETIVE]" in message or finding["pillar"] == "interpretive":
+        return "ambiguous-resolution"
+    if "[REALITY]" in message or finding["pillar"] == "reality":
+        return "external-data-divergence"
+    if "[ECONOMIC]" in message or finding["pillar"] == "economic":
+        return "validator-cost-amplification"
+    if "[ADVERSARIAL]" in message or finding["pillar"] == "adversarial":
+        return "prompt-steering"
+    if finding["pillar"] == "input":
+        return "invalid-input"
+    return explanation["title"].lower()
+
+
+def finding_location_family(finding):
+    message = finding["message"]
+    if "[ACCESS]" in message:
+        return "public-write-methods"
+
+    method_match = re.search(r"\bmethod:\s*(\w+)", message)
+    if method_match:
+        return f"method:{method_match.group(1)}"
+
+    line = finding.get("line")
+    if line:
+        return f"line:{line}"
+
+    return finding.get("source", "general")
+
+
+def merge_finding_explanations(findings):
+    explanations = explain_findings(findings)
+    grouped = {}
+
+    for finding, explanation in zip(findings, explanations):
+        key = (
+            finding_root_cause(finding, explanation),
+            finding_location_family(finding),
+        )
+        group = grouped.setdefault(key, {
+            **explanation,
+            "count": 0,
+            "lines": [],
+            "rawFindings": [],
+        })
+        group["count"] += 1
+        if explanation.get("line") and explanation["line"] not in group["lines"]:
+            group["lines"].append(explanation["line"])
+        group["rawFindings"].append(explanation["raw"])
+
+        if severity_score(finding["severity"]) > severity_score(group["severity"].lower()):
+            group["severity"] = explanation["severity"]
+            group["whySeverity"] = explanation["whySeverity"]
+
+    merged = list(grouped.values())
+    for group in merged:
+        group["lines"].sort()
+        if group["count"] > 1:
+            location_text = ", ".join(f"line {line}" for line in group["lines"][:4])
+            if len(group["lines"]) > 4:
+                location_text += f", and {len(group['lines']) - 4} more"
+            if location_text:
+                group["impact"] = f"{group['impact']} This pattern appears {group['count']} times ({location_text})."
+            else:
+                group["impact"] = f"{group['impact']} This pattern appears {group['count']} times."
+
+    return merged
+
+
+def build_next_steps(narrative_findings):
+    if not narrative_findings:
+        return [
+            "Run the full specialist review before deploying value-bearing contracts.",
+            "Add test cases for disputed outcomes and edge-case evidence.",
+            "Review all external data assumptions manually.",
+        ]
+
+    steps = []
+    for finding in narrative_findings:
+        if finding["recommendation"] not in steps:
+            steps.append(finding["recommendation"])
+        if len(steps) == 3:
+            break
+
+    fallback_steps = [
+        "Add regression tests for each fixed issue family.",
+        "Re-run the audit and confirm the detailed findings list no longer contains unresolved high-risk items.",
+        "Review all external data assumptions manually.",
+    ]
+    for fallback in fallback_steps:
+        if len(steps) == 3:
+            break
+        if fallback not in steps:
+            steps.append(fallback)
+
+    return steps
+
+
 def build_summary(findings, metrics, verdict):
     if not findings:
         return {
@@ -314,24 +422,26 @@ def build_summary(findings, metrics, verdict):
             ],
             "metricExplanations": metric_explanations(),
             "findingExplanations": [],
+            "narrativeFindings": [],
             "severityModel": SEVERITY_MODEL,
         }
 
-    top_titles = [item["title"] for item in explain_findings(findings)[:3]]
+    finding_explanations = explain_findings(findings)
+    narrative_findings = merge_finding_explanations(findings)
+    top_titles = [item["title"] for item in narrative_findings[:3]]
+    family_label = "issue family" if len(narrative_findings) == 1 else "issue families"
     return {
         "headline": verdict["message"].title(),
         "plainEnglish": (
-            f"The contract has {len(findings)} audit signal(s). The biggest concerns are: "
+            f"The contract has {len(findings)} audit signal(s) across {len(narrative_findings)} {family_label}. "
+            "The biggest concerns are: "
             + "; ".join(top_titles)
             + "."
         ),
-        "nextSteps": [
-            "Fix deterministic findings first, especially access control and unsafe Python.",
-            "Make subjective resolution criteria more precise before relying on validator consensus.",
-            "Reduce validator workload by bounding loops, source counts, and web renders.",
-        ],
+        "nextSteps": build_next_steps(narrative_findings),
         "metricExplanations": metric_explanations(),
-        "findingExplanations": explain_findings(findings),
+        "findingExplanations": finding_explanations,
+        "narrativeFindings": narrative_findings,
         "severityModel": SEVERITY_MODEL,
     }
 

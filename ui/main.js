@@ -261,7 +261,17 @@ document.addEventListener('DOMContentLoaded', () => {
             return `- **${label}**: ${metric.value}`;
         }).join('\n');
 
-        const findingsMd = (result.summary?.findingExplanations || []).map((finding, index) => [
+        const narrativeFindings = result.summary?.narrativeFindings || result.summary?.findingExplanations || [];
+        const groupedFindingsMd = narrativeFindings.map((finding, index) => [
+            `### ${index + 1}. ${finding.title} (${finding.severity})`,
+            finding.count > 1 ? `- **Occurrences**: ${finding.count}` : '',
+            finding.lines?.length ? `- **Locations**: ${finding.lines.map(line => `Line ${line}`).join(', ')}` : finding.line ? `- **Location**: Line ${finding.line}` : '',
+            `- **Impact**: ${finding.impact}`,
+            `- **Recommendation**: ${finding.recommendation}`,
+            `- **Suggested fix**: ${finding.suggestedFix}`,
+        ].filter(Boolean).join('\n')).join('\n\n') || 'No high-signal findings.';
+
+        const detailedFindingsMd = (result.summary?.findingExplanations || []).map((finding, index) => [
             `### ${index + 1}. ${finding.title} (${finding.severity})`,
             finding.line ? `- **Location**: Line ${finding.line}${finding.snippet ? ` \`${finding.snippet}\`` : ''}` : '',
             `- **Impact**: ${finding.impact}`,
@@ -288,8 +298,11 @@ ${metricsMd}
 ## Next Actions
 ${nextStepsMd}
 
-## Findings
-${findingsMd}
+## Key Finding Groups
+${groupedFindingsMd}
+
+## Detailed Findings
+${detailedFindingsMd}
 `;
     }
 

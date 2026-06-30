@@ -47,6 +47,33 @@ class Market:
         self.assertTrue(explanation["suggestedFix"])
         self.assertTrue(explanation["whySeverity"])
 
+    def test_summary_merges_duplicate_access_control_findings(self):
+        source = """
+class Market:
+    @gl.public.write
+    def submit_target(self, target):
+        self.targets.append(target)
+
+    @gl.public.write
+    def set_winner(self, winner):
+        self.winner = winner
+"""
+
+        result = analyze_contract("market.py", source)
+        access_details = [
+            finding for finding in result["summary"]["findingExplanations"]
+            if finding["title"] == "Public write may be callable by the wrong user"
+        ]
+        access_groups = [
+            finding for finding in result["summary"]["narrativeFindings"]
+            if finding["title"] == "Public write may be callable by the wrong user"
+        ]
+
+        self.assertEqual(len(access_details), 2)
+        self.assertEqual(len(access_groups), 1)
+        self.assertEqual(access_groups[0]["count"], 2)
+        self.assertEqual(result["summary"]["nextSteps"].count(access_groups[0]["recommendation"]), 1)
+
 
 if __name__ == "__main__":
     unittest.main()
