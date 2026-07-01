@@ -11,7 +11,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const contractNameInput = document.getElementById('contractName');
     const contractSourceInput = document.getElementById('contractSource');
     const sourcePreview = document.getElementById('sourcePreview');
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
     let latestResult = null;
+
+    if (themeToggleBtn) {
+        const applyTheme = (theme) => {
+            document.documentElement.setAttribute('data-theme', theme);
+            themeToggleBtn.setAttribute('aria-pressed', String(theme === 'dark'));
+            themeToggleBtn.setAttribute('title', theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+        };
+
+        const savedTheme = localStorage.getItem('theme') || document.documentElement.getAttribute('data-theme') || 'dark';
+        applyTheme(savedTheme);
+
+        themeToggleBtn.addEventListener('click', () => {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const newTheme = isDark ? 'light' : 'dark';
+            localStorage.setItem('theme', newTheme);
+            applyTheme(newTheme);
+        });
+    }
 
     const metrics = {
         consensus: document.getElementById('metricConsensus'),
